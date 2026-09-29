@@ -1,0 +1,88 @@
+name: Publicar tablero
+
+on:
+  repository_dispatch:
+    types: [actualizar-datos]   # debe coincidir con "Event Name" en Power Automate
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: publicar-tablero
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # historial completo para saber cuándo se subió cada imagen
+
+      - name: Actualizar datos.json con lo que mandó Power Automate
+        if: github.event_name == 'repository_dispatch'
+        env:
+          DATOS: ${{ github.event.client_payload.datos }}
+        run: |
+          printf '%s' "$DATOS" > datos.nuevo.json
+          # Rechaza lo que no sea un JSON válido con tablas, para no romper el sitio
+          if ! jq -e '.tablas | type == "object"' datos.nuevo.json > /dev/null; then
+            echo "::error::Los datos recibidos no son válidos. Se conserva la versión anterior."
+            exit 1
+          fi
+          # Solo guarda si cambió algo además de la hora de generación
+          if [ -f datos.json ] && [ "$(jq -S '.tablas' datos.json)" = "$(jq -S '.tablas' datos.nuevo.json)" ]; then
+            echo "Los datos no cambiaron."
+            rm datos.nuevo.json
+            echo "SIN_CAMBIOS=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          mv datos.nuevo.json datos.json
+          git config user.name "dds-bot"
+          git config user.email "dds-bot@users.noreply.github.com"
+          git add datos.json
+          git commit -m "Datos DDS $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git push
+
+      - name: Registrar fecha de cada imagen
+        if: env.SIN_CAMBIOS != '1'
+        run: |
+          mkdir -p img
+          {
+            echo "{"
+            primero=1
+            for f in img/*.png img/*.jpg img/*.jpeg; do
+              [ -f "$f" ] || continue
+              fecha=$(git log -1 --format=%cI -- "$f")
+              [ -n "$fecha" ] || continue
+              [ $primero -eq 1 ] || echo ","
+              printf '  "%s": "%s"' "$(basename "$f")" "$fecha"
+              primero=0
+            done
+            echo ""
+            echo "}"
+          } > img/fechas.json
+          cat img/fechas.json
+
+      - name: Preparar Pages
+        if: env.SIN_CAMBIOS != '1'
+        uses: actions/configure-pages@v5
+
+      - name: Empaquetar sitio
+        if: env.SIN_CAMBIOS != '1'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar
+        if: env.SIN_CAMBIOS != '1'
+        id: despliegue
+        uses: actions/deploy-pages@v4
