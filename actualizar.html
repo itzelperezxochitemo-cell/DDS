@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Actualizar tablero · DDS</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬆️</text></svg>">
+<style>
+:root{
+  --azul:#004b8b; --lienzo:#f2f2f2; --texto:#252423; --tenue:#6b6a68; --rojo:#d90000; --verde:#3f8f2f; --ambar:#b7791f; --marino:#12239e;
+  --din:Bahnschrift, "DIN Next LT Pro", "D-DIN", "Segoe UI", system-ui, sans-serif;
+  --sans:"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0}
+body{font-family:var(--sans);color:var(--texto);background:var(--lienzo);min-height:100vh}
+button,input{font:inherit}
+.barra{background:var(--azul);color:#fff;height:44px;display:flex;align-items:center;padding:0 18px;gap:14px;font-size:15px}
+.barra b{font-weight:600}.barra .esp{flex:1}
+.barra a{color:#fff}
+.banner{height:64px;border-bottom:5px solid var(--rojo);background:linear-gradient(90deg,#fcc501 0%,#fcc501 16%,#e3b83a 30%,#b4a06e 47%,#6f78a0 64%,#1146a6 80%,#0135ab 100%)}
+main{max-width:1000px;margin:0 auto;padding:10px 20px 60px}
+h1{font-family:var(--din);font-size:40px;text-align:center;margin:18px 0 4px}
+.intro{text-align:center;color:var(--tenue);margin:0 0 22px}
+.paso{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.12);padding:18px 22px;margin-bottom:18px}
+.paso h2{font-family:var(--din);font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:10px;color:var(--marino)}
+.paso h2 .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--marino);color:#fff;font-size:17px}
+.paso h2 .ok{margin-left:auto;font:600 14px var(--sans);color:var(--verde)}
+.paso p.ayuda{margin:2px 0 14px;color:var(--tenue);font-size:14px}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label.campo{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600}
+label.campo input{padding:9px 10px;border:1px solid #cfcfcf;border-radius:6px;font-weight:400}
+label.campo.ancho{grid-column:span 2}
+input:focus-visible,button:focus-visible{outline:3px solid #118dff;outline-offset:2px}
+.botones{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.btn{border:0;border-radius:8px;padding:10px 18px;font-weight:600;cursor:pointer;background:#e7e9f3;color:var(--marino)}
+.btn.prim{background:var(--marino);color:#fff}
+.btn.grande{font:700 20px var(--din);padding:14px 40px;border-radius:10px;box-shadow:0 5px 10px rgba(0,0,0,.25)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.texto{background:none;color:var(--tenue);text-decoration:underline;padding:6px}
+details.guia{background:#f6f8fc;border-radius:8px;padding:10px 14px;font-size:14px;margin-top:12px}
+details.guia summary{cursor:pointer;font-weight:600;color:var(--marino)}
+details.guia ol{margin:10px 0 4px;padding-left:22px;line-height:1.55}
+.zona{border:2px dashed #9aa4c4;border-radius:12px;padding:26px;text-align:center;cursor:pointer;background:#fafbff;transition:background .15s}
+.zona.encima{background:#e6ecff;border-color:var(--marino)}
+.zona b{font-family:var(--din);font-size:19px;display:block;margin-bottom:4px}
+.zona small{color:var(--tenue)}
+.estado{margin-top:12px;font-size:14px;line-height:1.5}
+.estado .bien{color:var(--verde);font-weight:600}.estado .mal{color:var(--rojo);font-weight:600}.estado .aviso{color:var(--ambar);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;background:#eef1f7;border-radius:20px;padding:3px 10px}
+.chip.falta{background:#fde2e1;color:#8c1010}
+.imagenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-top:14px}
+.slot{border:1px solid #dedede;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;background:#fff;cursor:pointer;position:relative}
+.slot:hover{border-color:var(--marino)}
+.slot .vista{height:110px;border-radius:6px;background:#f1f1f1 center/contain no-repeat;display:grid;place-items:center;color:#9a9a9a;font-size:12px;text-align:center;padding:6px}
+.slot b{font-size:13px}
+.slot code{font-size:11px;color:var(--tenue)}
+.slot .st{font-size:12px}
+.slot .quitar{position:absolute;top:6px;right:6px;border:0;background:#fff;border-radius:50%;width:24px;height:24px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3);display:none}
+.slot.lleno .quitar{display:block}
+.slot.lleno{border-color:var(--verde);box-shadow:0 0 0 1px var(--verde)}
+.resumen{list-style:none;margin:6px 0 16px;padding:0;font-size:15px}
+.resumen li{padding:6px 0;border-bottom:1px solid #eee;display:flex;gap:10px}
+.centro{text-align:center}
+.bitacora{margin-top:16px;background:#1f2330;color:#dfe6ff;border-radius:8px;padding:12px 14px;font:13px/1.6 Consolas,monospace;max-height:240px;overflow:auto;display:none;text-align:left}
+.bitacora.visible{display:block}
+.final{margin-top:16px;padding:16px;border-radius:10px;font-size:16px;display:none}
+.final.visible{display:block}
+.final.bien{background:#e7f5e3;color:#1f5f14}.final.mal{background:#fde2e1;color:#8c1010}
+.final a{color:inherit;font-weight:700}
+@media (max-width:700px){.campos{grid-template-columns:1fr}label.campo.ancho{grid-column:span 1}h1{font-size:30px}}
+</style>
+</head>
+<body>
+<header class="barra"><b>PG_DSC_MX · DDS</b><span class="esp"></span><a href="./">Ver tablero</a></header>
+<div class="banner"></div>
+<main>
+  <h1>Actualizar tablero</h1>
+  <p class="intro">Sube el Excel del día y las imágenes. Al publicar, el tablero se actualiza en 1 o 2 minutos.</p>
+
+  <!-- PASO 1 -->
+  <section class="paso" id="paso1">
+    <h2><span class="n">1</span>Conexión con GitHub <span class="ok" id="okConexion"></span></h2>
+    <p class="ayuda">Solo se configura una vez en esta computadora. La clave se guarda en este navegador y no se sube a ningún lado.</p>
+    <div id="formConexion">
+      <div class="campos">
+        <label class="campo">Usuario de GitHub<input id="cUsuario" autocomplete="off" spellcheck="false"></label>
+        <label class="campo">Repositorio<input id="cRepo" autocomplete="off" spellcheck="false" placeholder="dds-tablero"></label>
+        <label class="campo ancho">Clave (token) de GitHub<input id="cToken" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>
+      </div>
+      <div class="botones"><button class="btn prim" id="btnProbar">Guardar y probar</button><span class="estado" id="estadoConexion"></span></div>
+      <details class="guia"><summary>¿Cómo saco la clave de GitHub?</summary>
+        <ol>
+          <li>En GitHub, da clic en tu foto (arriba a la derecha) → <b>Settings</b>.</li>
+          <li>Hasta abajo del menú izquierdo: <b>Developer settings → Personal access tokens → Fine-grained tokens</b>.</li>
+          <li>Da clic en <b>Generate new token</b>. En <i>Token name</i> escribe <code>Tablero DDS</code> y en <i>Expiration</i> elige la fecha más lejana que te permita.</li>
+          <li>En <i>Repository access</i> elige <b>Only select repositories</b> y selecciona tu repositorio del tablero.</li>
+          <li>En <i>Permissions → Repository permissions</i>, busca <b>Contents</b> y cámbialo a <b>Read and write</b>.</li>
+          <li>Da clic en <b>Generate token</b>, copia la clave (empieza con <code>github_pat_</code>) y pégala aquí. GitHub solo la muestra una vez.</li>
+        </ol>
+      </details>
+    </div>
+    <div id="conexionLista" hidden>
+      <div class="estado" id="resumenConexion"></div>
+      <div class="botones"><button class="btn texto" id="btnCambiar">Cambiar conexión</button><button class="btn texto" id="btnOlvidar">Borrar la clave de esta computadora</button></div>
+    </div>
+  </section>
+
+  <!-- PASO 2 -->
+  <section class="paso" id="paso2">
+    <h2><span class="n">2</span>Excel del día <span class="ok" id="okExcel"></span></h2>
+    <p class="ayuda">En el DDS de SharePoint: <b>Archivo → Guardar como → Descargar una copia</b>. Luego arrastra aquí el archivo descargado.</p>
+    <div class="zona" id="zonaExcel" tabindex="0" role="button" aria-label="Elegir el archivo de Excel">
+      <b>Arrastra aquí el Excel DDS</b><small>o da clic para buscarlo (.xlsx)</small>
+    </div>
+    <input type="file" id="archExcel" accept=".xlsx,.xlsm" hidden>
+    <div class="estado" id="estadoExcel"></div>
+  </section>
+
+  <!-- PASO 3 -->
+  <section class="paso" id="paso3">
+    <h2><span class="n">3</span>Imágenes del día <span class="ok" id="okImg"></span></h2>
+    <p class="ayuda">Da clic en cada recuadro para elegir su imagen, o arrastra varias a la vez sobre los recuadros: si el nombre del archivo coincide, se acomodan solas. Si alguna se queda vacía, en el tablero se conserva la de ayer.</p>
+    <div class="imagenes" id="slots"></div>
+    <input type="file" id="archImg" accept="image/*" hidden>
+  </section>
+
+  <!-- PASO 4 -->
+  <section class="paso" id="paso4">
+    <h2><span class="n">4</span>Publicar</h2>
+    <ul class="resumen" id="resumen"></ul>
+    <div class="centro"><button class="btn prim grande" id="btnPublicar" disabled>Publicar</button></div>
+    <div class="bitacora" id="bitacora" aria-live="polite"></div>
+    <div class="final" id="final" aria-live="polite"></div>
+  </section>
+</main>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN
+   ========================================================= */
+const IMAGENES = [
+  { archivo: 'calidad-1.png',       nombre: 'Calidad 1' },
+  { archivo: 'calidad-2.png',       nombre: 'Calidad 2' },
+  { archivo: 'mantenimiento-1.png', nombre: 'Mantenimiento 1', pista: 'Equipos en taller' },
+  { archivo: 'mantenimiento-2.png', nombre: 'Mantenimiento 2', pista: 'Cortinas por nave' },
+  { archivo: 'cortes-detalle.png',  nombre: 'Cortes', pista: 'Detalle por causa raíz' },
+];
+const OMITIR = ['TABLA1'];                 // se manda resumida como TABLA1_RESUMEN
+const TABLAS_TABLERO = ['AREASTRIGGERS','HSE','PFCT','CALIDAD','MANTENIMIENTO','CAPACIDAD','UNIDADES24','STORAGE','IRA','IRAPDET','UNIDADESVACIAS',
+  'INDOPERACIONES','OPERACIONTURNOS','LETDOWN','DAÑADO','VVLOSTA','INDINVENTARIO','VARIACIONES','AYUDASINV','BRACK','DMG','GENERAL',
+  'BRACKETPALLETSUNO','BRACKETPALLETSDOS','SISTEMAS','USUARIOS','TABLA1','WORKQUEUE','PAROSISTEM','RECIBOSDIA','INBOUND','EXPORT','TRDOS','TRUNO',
+  'ARRIBOTRUNO','ARRIBOTRDOS','ARRIBOSEXPORT','RETRASADOSVSFTE','ESTATUSCARGA','ESTATUSRECIBO','CORTES'];
+const RAMA = 'main';
+const CLAVE_LS = 'dds-actualizar-conexion';
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+let conexion = null;          // { usuario, repo, token }
+let datos = null;             // objeto datos.json listo
+let datosTexto = null;
+const imgs = {};              // archivo -> { blob, url, origen }
+let slotActivo = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* =========================================================
+   1. CONEXIÓN
+   ========================================================= */
+function leerConexion() { try { return JSON.parse(localStorage.getItem(CLAVE_LS) || 'null'); } catch { return null; } }
+function guardarConexion(c) { try { localStorage.setItem(CLAVE_LS, JSON.stringify(c)); } catch {} }
+function sugerirRepo() {
+  // En GitHub Pages la dirección es usuario.github.io/repositorio/
+  const m = location.hostname.match(/^([^.]+)\.github\.io$/i);
+  return { usuario: m ? m[1] : '', repo: m ? (location.pathname.split('/').filter(Boolean)[0] || '') : '' };
+}
+async function gh(ruta, opciones = {}) {
+  const r = await fetch(`https://api.github.com/repos/${conexion.usuario}/${conexion.repo}${ruta}`, {
+    ...opciones,
+    headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${conexion.token}`, 'X-GitHub-Api-Version': '2022-11-28', ...(opciones.body ? { 'Content-Type': 'application/json' } : {}) },
+  });
+  if (!r.ok) {
+    let msg = ''; try { msg = (await r.json()).message || ''; } catch {}
+    const e = new Error(explicarError(r.status, msg)); e.status = r.status; throw e;
+  }
+  return r.status === 204 ? null : r.json();
+}
+function explicarError(status, msg) {
+  if (status === 401) return 'La clave no es válida o ya venció. Genera una nueva y vuelve a guardarla.';
+  if (status === 403) return 'La clave no tiene permiso de escritura. Revisa que en Contents diga "Read and write".';
+  if (status === 404) return 'No se encontró el repositorio. Revisa el usuario, el nombre del repositorio y que la clave tenga acceso a él.';
+  if (status === 409 || status === 422) return 'GitHub rechazó el cambio porque alguien más publicó al mismo tiempo. Vuelve a dar clic en Publicar.';
+  return `GitHub respondió ${status}${msg ? ': ' + msg : ''}.`;
+}
+async function probarConexion() {
+  const c = { usuario: $('cUsuario').value.trim(), repo: $('cRepo').value.trim(), token: $('cToken').value.trim() };
+  const est = $('estadoConexion');
+  if (!c.usuario || !c.repo || !c.token) { est.innerHTML = '<span class="mal">Llena los tres campos.</span>'; return; }
+  conexion = c; est.textContent = 'Probando…';
+  try {
+    const info = await fetch(`https://api.github.com/repos/${c.usuario}/${c.repo}`, { headers: { Authorization: `Bearer ${c.token}`, Accept: 'application/vnd.github+json' } });
+    if (!info.ok) throw new Error(explicarError(info.status));
+    const j = await info.json();
+    if (!j.permissions || !j.permissions.push) throw new Error(explicarError(403));
+    guardarConexion(c); mostrarConexion(); actualizarResumen();
+  } catch (e) {
+    conexion = null;
+    est.innerHTML = `<span class="mal">${esc(e.message === 'Failed to fetch' ? 'No hay conexión con GitHub desde esta red.' : e.message)}</span>`;
+  }
+}
+function mostrarConexion() {
+  const lista = !!conexion;
+  $('formConexion').hidden = lista; $('conexionLista').hidden = !lista;
+  $('okConexion').textContent = lista ? '✔ Lista' : '';
+  if (lista) $('resumenConexion').innerHTML = `<span class="bien">Conectado</span> a <b>${esc(conexion.usuario)}/${esc(conexion.repo)}</b>.`;
+}
+$('btnProbar').onclick = probarConexion;
+$('btnCambiar').onclick = () => { $('cUsuario').value = conexion.usuario; $('cRepo').value = conexion.repo; $('cToken').value = ''; conexion = null; mostrarConexion(); actualizarResumen(); };
+$('btnOlvidar').onclick = () => { try { localStorage.removeItem(CLAVE_LS); } catch {} conexion = null; $('cToken').value = ''; mostrarConexion(); actualizarResumen(); $('estadoConexion').textContent = 'La clave se borró de esta computadora.'; };
+
+/* =========================================================
+   2. LECTOR DE EXCEL (sin librerías)
+   Un .xlsx es un ZIP con XML adentro. Se descomprime con el
+   DecompressionStream del navegador y se leen las tablas con nombre.
+   ========================================================= */
+async function leerZip(buffer) {
+  const dv = new DataView(buffer), u8 = new Uint8Array(buffer);
+  let fin = -1;
+  for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { fin = i; break; }
+  if (fin < 0) throw new Error('El archivo no es un Excel válido (.xlsx).');
+  const total = dv.getUint16(fin + 10, true);
+  let p = dv.getUint32(fin + 16, true);
+  const entradas = {}, dec = new TextDecoder();
+  for (let k = 0; k < total; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('El Excel está dañado.');
+    const metodo = dv.getUint16(p + 10, true), tamC = dv.getUint32(p + 20, true);
+    const nLen = dv.getUint16(p + 28, true), eLen = dv.getUint16(p + 30, true), cLen = dv.getUint16(p + 32, true), local = dv.getUint32(p + 42, true);
+    const nombre = dec.decode(u8.subarray(p + 46, p + 46 + nLen));
+    entradas[nombre] = { metodo, tamC, local };
+    p += 46 + nLen + eLen + cLen;
+  }
+  return {
+    existe: n => n in entradas,
+    nombres: () => Object.keys(entradas),
+    async texto(n) {
+      const e = entradas[n]; if (!e) return null;
+      const ini = e.local + 30 + dv.getUint16(e.local + 26, true) + dv.getUint16(e.local + 28, true);
+      const datos = u8.subarray(ini, ini + e.tamC);
+      if (e.metodo === 0) return dec.decode(datos);
+      if (e.metodo !== 8) throw new Error('Compresión no soportada en ' + n);
+      const flujo = new Blob([datos]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return await new Response(flujo).text();
+    },
+  };
+}
+const xml = t => new DOMParser().parseFromString(t, 'application/xml');
+const hijos = (nodo, tag) => Array.from(nodo.getElementsByTagNameNS('*', tag));
+function rutaRel(base, destino) {
+  if (destino.startsWith('/')) return destino.slice(1);
+  const partes = base.split('/'); partes.pop();
+  for (const s of destino.split('/')) { if (s === '..') partes.pop(); else if (s !== '.') partes.push(s); }
+  return partes.join('/');
+}
+async function relaciones(zip, archivo) {
+  const i = archivo.lastIndexOf('/'), r = archivo.slice(0, i) + '/_rels/' + archivo.slice(i + 1) + '.rels';
+  const t = await zip.texto(r); if (!t) return [];
+  return hijos(xml(t), 'Relationship').map(n => ({ id: n.getAttribute('Id'), tipo: n.getAttribute('Type') || '', destino: rutaRel(archivo, n.getAttribute('Target')) }));
+}
+const decodX = s => s.replace(/_x([0-9A-Fa-f]{4})_/g, (m, h) => String.fromCharCode(parseInt(h, 16)));
+function colNum(letras) { let n = 0; for (const c of letras) n = n * 26 + (c.charCodeAt(0) - 64); return n; }
+function celdaRef(ref) { const m = /^([A-Z]+)(\d+)$/.exec(ref.replace(/\$/g, '')); return { c: colNum(m[1]), f: +m[2] }; }
+const redondear = v => typeof v === 'number' ? Math.round(v * 1e6) / 1e6 : v;
+const serialDe = iso => (Date.parse(iso) / 86400000) + 25569;
+
+async function leerExcel(archivo) {
+  const zip = await leerZip(await archivo.arrayBuffer());
+  if (!zip.existe('xl/workbook.xml')) throw new Error('El archivo no parece un Excel (.xlsx).');
+  // Textos compartidos
+  const cs = [];
+  const tss = await zip.texto('xl/sharedStrings.xml');
+  if (tss) for (const si of hijos(xml(tss), 'si')) cs.push(hijos(si, 't').filter(t => t.parentNode.localName !== 'rPh').map(t => t.textContent).join(''));
+  // Hojas
+  const libro = xml(await zip.texto('xl/workbook.xml'));
+  const relLibro = await relaciones(zip, 'xl/workbook.xml');
+  const hojas = hijos(libro, 'sheet').map(s => {
+    const rid = s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id') || s.getAttribute('r:id');
+    return { nombre: s.getAttribute('name'), ruta: (relLibro.find(r => r.id === rid) || {}).destino };
+  }).filter(h => h.ruta);
+
+  const tablas = {};
+  for (const h of hojas) {
+    const rels = (await relaciones(zip, h.ruta)).filter(r => /\/table$/.test(r.tipo));
+    if (!rels.length) continue;
+    // Celdas de la hoja
+    const hoja = xml(await zip.texto(h.ruta));
+    const celdas = new Map();
+    for (const c of hijos(hoja, 'c')) {
+      const ref = c.getAttribute('r'); if (!ref) continue;
+      const t = c.getAttribute('t'), vN = hijos(c, 'v')[0], v = vN ? vN.textContent : null;
+      let valor = '';
+      if (t === 's') valor = v != null ? cs[+v] ?? '' : '';
+      else if (t === 'inlineStr') valor = hijos(c, 't').map(x => x.textContent).join('');
+      else if (t === 'str' || t === 'e') valor = v ?? '';
+      else if (t === 'b') valor = v === '1';
+      else if (t === 'd') valor = v ? serialDe(v) : '';
+      else if (v != null && v !== '') valor = Number(v);
+      const { c: col, f } = celdaRef(ref);
+      celdas.set(f * 20000 + col, valor);
+    }
+    const valorEn = (f, c) => { const v = celdas.get(f * 20000 + c); return v === undefined ? '' : v; };
+    for (const r of rels) {
+      const tx = xml(await zip.texto(r.destino)).documentElement;
+      const nombre = tx.getAttribute('displayName') || tx.getAttribute('name');
+      const [a, b] = tx.getAttribute('ref').split(':'); const ini = celdaRef(a), fin = celdaRef(b || a);
+      const enc = tx.getAttribute('headerRowCount') === '0' ? 0 : 1, tot = +(tx.getAttribute('totalsRowCount') || 0);
+      const nombresCol = hijos(tx, 'tableColumn').map(n => decodX(n.getAttribute('name') || ''));
+      const columnas = [];
+      for (let c = ini.c; c <= fin.c; c++) columnas.push(String(enc ? (valorEn(ini.f, c) === '' ? nombresCol[c - ini.c] ?? '' : valorEn(ini.f, c)) : nombresCol[c - ini.c] ?? '').trim());
+      const filas = [];
+      for (let f = ini.f + enc; f <= fin.f; f++) {
+        const fila = []; for (let c = ini.c; c <= fin.c; c++) fila.push(redondear(valorEn(f, c)));
+        // La fila de totales se incluye solo si alguien capturó ahí un registro (como lo toma Power BI)
+        if (tot && f > fin.f - tot && (fila[0] === '' || /^total/i.test(String(fila[0])))) continue;
+        if (fila.some(v => v !== '' && v !== null)) filas.push(fila);
+      }
+      tablas[nombre] = { hoja: h.nombre, columnas, filas };
+    }
+  }
+  if (!Object.keys(tablas).length) throw new Error('El Excel no tiene tablas con nombre. ¿Es el archivo DDS correcto?');
+
+  // TABLA1 se manda resumida (solicitudes por área, operación y antigüedad)
+  const salida = {};
+  for (const [n, t] of Object.entries(tablas)) if (!OMITIR.includes(n)) salida[n] = t;
+  const t1 = tablas['TABLA1'];
+  if (t1) {
+    const iA = t1.columnas.indexOf('Area'), iO = t1.columnas.indexOf('Operation Code'), iG = t1.columnas.indexOf('Aging'), iH = t1.columnas.indexOf('Hours Open');
+    const g = {};
+    for (const f of t1.filas) {
+      const k = [String(f[iA] || 'Sin área').trim(), String(f[iO] || 'Sin código').trim(), String(f[iG] || 'Menos de 24 Hrs').trim()];
+      const clave = k.join('|'), h = typeof f[iH] === 'number' ? f[iH] : 0;
+      if (!g[clave]) g[clave] = [...k, 0, 0];
+      g[clave][3] += 1; g[clave][4] = Math.max(g[clave][4], Math.round(h * 100) / 100);
+    }
+    salida['TABLA1_RESUMEN'] = { hoja: t1.hoja, columnas: ['Area', 'Operation Code', 'Aging', 'Solicitudes', 'Horas máx'], filas: Object.keys(g).sort().map(k => g[k]) };
+  }
+  return { generado: new Date().toISOString(), tablas: salida };
+}
+
+function fechaTexto(s) { const d = new Date(Math.round((s - 25569) * 86400000)); return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`; }
+function ultimaFechaConDatos(t) {
+  if (!t) return null; let mx = null;
+  for (const f of t.filas) { const d = typeof f[0] === 'number' ? Math.floor(f[0]) : null; if (d > 30000 && f.slice(1).some(v => v !== '' && v !== 0 && !(typeof v === 'string' && v.startsWith('#'))) && (mx == null || d > mx)) mx = d; }
+  return mx;
+}
+
+async function recibirExcel(archivo) {
+  const est = $('estadoExcel');
+  if (!archivo) return;
+  if (!/\.xls[xm]$/i.test(archivo.name)) { est.innerHTML = '<span class="mal">Ese archivo no es un Excel .xlsx.</span>'; return; }
+  est.textContent = 'Leyendo ' + archivo.name + '…'; datos = null; datosTexto = null; $('okExcel').textContent = '';
+  try {
+    if (typeof DecompressionStream === 'undefined') throw new Error('Este navegador es muy antiguo. Usa Edge o Chrome actualizados.');
+    const d = await leerExcel(archivo);
+    const esperadas = TABLAS_TABLERO.filter(n => n !== 'TABLA1');
+    const faltan = esperadas.filter(n => !d.tablas[n]);
+    const ult = ultimaFechaConDatos(d.tablas['AREASTRIGGERS']);
+    datos = d; datosTexto = JSON.stringify(d);
+    $('okExcel').textContent = '✔ Listo';
+    est.innerHTML = `<span class="bien">✔ ${esc(archivo.name)}</span> · ${Object.keys(d.tablas).length} tablas leídas · ${(datosTexto.length / 1024).toFixed(0)} KB
+      ${ult ? `<br>Último día con semáforos capturados: <b>${fechaTexto(ult)}</b>` : ''}
+      ${faltan.length ? `<br><span class="aviso">⚠ No encontré estas tablas, sus pantallas saldrán vacías:</span><div class="chips">${faltan.map(n => `<span class="chip falta">${esc(n)}</span>`).join('')}</div>` : ''}`;
+  } catch (e) {
+    console.error(e);
+    est.innerHTML = `<span class="mal">No se pudo leer el Excel.</span> ${esc(e.message)}`;
+  }
+  actualizarResumen();
+}
+const zona = $('zonaExcel');
+zona.onclick = () => $('archExcel').click();
+zona.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('archExcel').click(); } };
+$('archExcel').onchange = e => { recibirExcel(e.target.files[0]); e.target.value = ''; };
+['dragenter', 'dragover'].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.add('encima'); }));
+['dragleave', 'drop'].forEach(ev => zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.remove('encima'); }));
+zona.addEventListener('drop', e => {
+  const fs = Array.from(e.dataTransfer.files);
+  const x = fs.find(f => /\.xls[xm]$/i.test(f.name)); if (x) recibirExcel(x);
+  fs.filter(f => f.type.startsWith('image/')).forEach(f => asignarPorNombre(f));
+});
+
+/* =========================================================
+   3. IMÁGENES
+   ========================================================= */
+let fechasPublicadas = {};
+async function cargarFechasPublicadas() {
+  try { const r = await fetch('img/fechas.json?v=' + Date.now(), { cache: 'no-store' }); if (r.ok) fechasPublicadas = await r.json(); } catch {}
+  pintarSlots();
+}
+function estadoPublicado(arch) {
+  const iso = fechasPublicadas[arch]; if (!iso) return '<span style="color:#9a9a9a">Aún no publicada</span>';
+  const d = new Date(iso), hoy = d.toDateString() === new Date().toDateString();
+  return hoy ? `<span style="color:var(--verde)">Publicada hoy ${d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</span>`
+             : `<span style="color:var(--rojo)">Última: ${d.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit' })}</span>`;
+}
+function pintarSlots() {
+  $('slots').innerHTML = IMAGENES.map(im => {
+    const x = imgs[im.archivo];
+    return `<div class="slot ${x ? 'lleno' : ''}" data-slot="${im.archivo}" tabindex="0" role="button" aria-label="Elegir imagen para ${esc(im.nombre)}">
+      <button class="quitar" data-quitar="${im.archivo}" aria-label="Quitar imagen" title="Quitar">✕</button>
+      <div class="vista" style="${x ? `background-image:url('${x.url}')` : ''}">${x ? '' : 'Clic o arrastra<br>una imagen'}</div>
+      <b>${esc(im.nombre)}</b>${im.pista ? `<small style="color:var(--tenue);font-size:12px">${esc(im.pista)}</small>` : ''}
+      <code>${im.archivo}</code>
+      <div class="st">${x ? `<span style="color:var(--verde)">✔ ${esc(x.origen)}</span>` : estadoPublicado(im.archivo)}</div></div>`;
+  }).join('');
+  const n = Object.keys(imgs).length;
+  $('okImg').textContent = n ? `✔ ${n} de ${IMAGENES.length}` : '';
+}
+// Convierte cualquier imagen a PNG para que el nombre siempre coincida
+async function aPNG(archivo) {
+  if (archivo.type === 'image/png') return archivo;
+  const bmp = await createImageBitmap(archivo);
+  const cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height;
+  cv.getContext('2d').drawImage(bmp, 0, 0);
+  return await new Promise(res => cv.toBlob(res, 'image/png'));
+}
+async function ponerImagen(slot, archivo) {
+  if (!archivo || !archivo.type.startsWith('image/')) return;
+  const blob = await aPNG(archivo);
+  if (imgs[slot]) URL.revokeObjectURL(imgs[slot].url);
+  imgs[slot] = { blob, url: URL.createObjectURL(blob), origen: archivo.name };
+  pintarSlots(); actualizarResumen();
+}
+function asignarPorNombre(archivo) {
+  const base = archivo.name.toLowerCase().replace(/\.[a-z]+$/, '');
+  const im = IMAGENES.find(i => i.archivo.replace('.png', '') === base);
+  if (im) ponerImagen(im.archivo, archivo);
+  return !!im;
+}
+$('slots').addEventListener('click', e => {
+  const q = e.target.closest('[data-quitar]');
+  if (q) { e.stopPropagation(); URL.revokeObjectURL(imgs[q.dataset.quitar].url); delete imgs[q.dataset.quitar]; pintarSlots(); actualizarResumen(); return; }
+  const s = e.target.closest('[data-slot]'); if (s) { slotActivo = s.dataset.slot; $('archImg').click(); }
+});
+$('slots').addEventListener('keydown', e => { const s = e.target.closest('[data-slot]'); if (s && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); slotActivo = s.dataset.slot; $('archImg').click(); } });
+$('archImg').onchange = e => { if (slotActivo) ponerImagen(slotActivo, e.target.files[0]); e.target.value = ''; };
+$('slots').addEventListener('dragover', e => e.preventDefault());
+$('slots').addEventListener('drop', e => {
+  e.preventDefault();
+  const fs = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  const s = e.target.closest('[data-slot]');
+  if (fs.length === 1 && s) { ponerImagen(s.dataset.slot, fs[0]); return; }
+  const sinLugar = fs.filter(f => !asignarPorNombre(f));
+  if (sinLugar.length && s) ponerImagen(s.dataset.slot, sinLugar[0]);
+});
+
+/* =========================================================
+   4. PUBLICAR (un solo cambio en GitHub con todo junto)
+   ========================================================= */
+function actualizarResumen() {
+  const n = Object.keys(imgs).length;
+  $('resumen').innerHTML = `
+    <li>${conexion ? '✔' : '✖'} Conexión con GitHub ${conexion ? '' : '<span class="mal">(falta el paso 1)</span>'}</li>
+    <li>${datos ? '✔ Datos del Excel' : '— Sin Excel: los datos del tablero se quedan como están'}</li>
+    <li>${n ? `✔ ${n} imagen${n > 1 ? 'es' : ''} nueva${n > 1 ? 's' : ''}` : '— Sin imágenes nuevas'}${n && n < IMAGENES.length ? ` <span class="aviso">(faltan ${IMAGENES.length - n}; se conservan las anteriores)</span>` : ''}</li>`;
+  $('btnPublicar').disabled = !conexion || (!datos && !n);
+}
+const bit = t => { const b = $('bitacora'); b.classList.add('visible'); b.innerHTML += esc(t) + '<br>'; b.scrollTop = b.scrollHeight; };
+function aBase64(bytes) { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); }
+
+async function publicar() {
+  const btn = $('btnPublicar'), fin = $('final');
+  btn.disabled = true; fin.className = 'final'; $('bitacora').innerHTML = '';
+  try {
+    const archivos = [];
+    if (datos) { datos.generado = new Date().toISOString(); datosTexto = JSON.stringify(datos); archivos.push({ ruta: 'datos.json', b64: aBase64(new TextEncoder().encode(datosTexto)) }); }
+    for (const [arch, x] of Object.entries(imgs)) archivos.push({ ruta: 'img/' + arch, b64: aBase64(new Uint8Array(await x.blob.arrayBuffer())) });
+
+    bit('Consultando la última versión del sitio…');
+    const ref = await gh(`/git/ref/heads/${RAMA}`);
+    const base = await gh(`/git/commits/${ref.object.sha}`);
+    const arbol = [];
+    for (const a of archivos) {
+      bit(`Subiendo ${a.ruta}…`);
+      const blob = await gh('/git/blobs', { method: 'POST', body: JSON.stringify({ content: a.b64, encoding: 'base64' }) });
+      arbol.push({ path: a.ruta, mode: '100644', type: 'blob', sha: blob.sha });
+    }
+    bit('Guardando el cambio…');
+    const tree = await gh('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: base.tree.sha, tree: arbol }) });
+    const ahora = new Date().toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+    const partes = [datos ? 'datos' : null, Object.keys(imgs).length ? `${Object.keys(imgs).length} imagen(es)` : null].filter(Boolean).join(' + ');
+    const commit = await gh('/git/commits', { method: 'POST', body: JSON.stringify({ message: `Actualización DDS ${ahora} (${partes})`, tree: tree.sha, parents: [ref.object.sha] }) });
+    await gh(`/git/refs/heads/${RAMA}`, { method: 'PATCH', body: JSON.stringify({ sha: commit.sha }) });
+    bit('✔ Enviado. GitHub está publicando el sitio…');
+    fin.className = 'final visible bien';
+    fin.innerHTML = `✔ <b>Enviado.</b> El tablero se actualiza en 1 o 2 minutos. <span id="espera">Revisando…</span>`;
+    esperarPublicacion(datos ? datos.generado : null);
+  } catch (e) {
+    console.error(e);
+    fin.className = 'final visible mal';
+    fin.innerHTML = `✖ <b>No se publicó.</b> ${esc(e.message === 'Failed to fetch' ? 'No hay conexión con GitHub desde esta red.' : e.message)}`;
+    bit('✖ ' + e.message);
+  } finally { actualizarResumen(); }
+}
+async function esperarPublicacion(generado) {
+  const el = () => $('espera');
+  if (!generado) { el().innerHTML = `Cuando termine, las imágenes ya aparecerán en el <a href="./">tablero</a>.`; return; }
+  const inicio = Date.now();
+  while (Date.now() - inicio < 5 * 60000) {
+    await new Promise(r => setTimeout(r, 10000));
+    try { const r = await fetch('datos.json?v=' + Date.now(), { cache: 'no-store' }); if (r.ok && (await r.json()).generado === generado) { el().innerHTML = `<b>¡Ya está publicado!</b> <a href="./">Abrir el tablero</a>`; cargarFechasPublicadas(); return; } } catch {}
+    const s = Math.round((Date.now() - inicio) / 1000); if (el()) el().textContent = `Publicando… (${s} s)`;
+  }
+  el().innerHTML = `Está tardando más de lo normal. Revisa la pestaña <a href="https://github.com/${esc(conexion.usuario)}/${esc(conexion.repo)}/actions" target="_blank" rel="noopener">Actions</a> en GitHub.`;
+}
+$('btnPublicar').onclick = publicar;
+
+/* Inicio */
+(function iniciar() {
+  conexion = leerConexion();
+  const s = sugerirRepo();
+  $('cUsuario').value = conexion?.usuario || s.usuario;
+  $('cRepo').value = conexion?.repo || s.repo || 'dds-tablero';
+  mostrarConexion(); pintarSlots(); actualizarResumen(); cargarFechasPublicadas();
+})();
+</script>
+</body>
+</html>
